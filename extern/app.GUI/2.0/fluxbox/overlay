@@ -1,0 +1,16 @@
+toolbar.height:                              40
+window.title.height:                         20
+toolbar.shaped:                       	  false
+
+! (toolbar) (iconbar) background color
+toolbar.iconbar.focused:                  Flat
+toolbar.iconbar.focused.color:         #2f5561
+toolbar.iconbar.focused.colorTo:       #2f5561
+
+toolbar.color:                         #2f5561
+
+toolbar.clock:						                flat
+toolbar.clock.pixmap:
+toolbar.clock.justify:					        center
+toolbar.clock.color:					         #4bb3e3
+toolbar.clock.textColor:			       	 #1e5a75

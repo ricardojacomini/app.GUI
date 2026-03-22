@@ -1,0 +1,111 @@
+#!/bin/bash
+set -e
+
+backend="cpu"
+mode=""
+geometry=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --gpu)
+      backend="gpu"
+      shift
+      ;;
+    --cpu)
+      backend="cpu"
+      shift
+      ;;
+    --geometry)
+      if [[ $# -lt 2 ]]; then
+        echo "Missing value for --geometry" 1>&2
+        exit 1
+      fi
+      geometry="$2"
+      shift 2
+      ;;
+    --start-session)
+      mode="start-session"
+      shift
+      break
+      ;;
+    --print-env)
+      mode="print-env"
+      shift
+      break
+      ;;
+    --run)
+      mode="run"
+      shift
+      break
+      ;;
+    --help|-h)
+      mode="help"
+      shift
+      break
+      ;;
+    *)
+      echo "Unknown option: $1" 1>&2
+      mode="help"
+      break
+      ;;
+  esac
+done
+
+case "$mode" in
+  start-session)
+    exec "${backend}.app" ${geometry:+--geometry "$geometry"} --start-session
+    ;;
+  print-env)
+    exec "${backend}.app" --print-env
+    ;;
+  run)
+    if [[ $# -eq 0 ]]; then
+      echo "Usage: app [--gpu] --run <application> [args...]" 1>&2
+      exit 1
+    fi
+    exec "${backend}-run" "$@"
+    ;;
+  help|"")
+    cat <<'END_HELP'
+Usage:
+  app [--geometry WIDTHxHEIGHT] --start-session
+  app --run <application> [args...]
+  app --print-env
+  app --gpu [--geometry WIDTHxHEIGHT] --start-session
+  app --gpu --run <application> [args...]
+  app --gpu --print-env
+
+Default backend:
+  CPU
+
+Supported resolutions:
+  1024x768
+  1280x1024
+  1920x1080
+  2560x1440
+
+Resolution:
+  Use --geometry WIDTHxHEIGHT, or run --start-session in the foreground to choose from a menu.
+
+Examples:
+  app --start-session
+  app --geometry 1024x768 --start-session &
+  app --geometry 1920x1080 --start-session &
+  ml matlab/R2021a
+  app --run matlab -desktop
+
+  app --gpu --start-session
+  app --gpu --geometry 2560x1440 --start-session &
+  ml matlab/R2021a
+  app --gpu --run matlab -desktop
+
+  app --start-session & # default geometry 1024x768
+  ml matlab/R2021a
+  app --run matlab -desktop
+
+  app --run xterm -fa "DejaVu Sans Mono" -fs 11 -bg "#1e1e1e" -fg "#d4d4d4"
+
+
+END_HELP
+    ;;
+esac
