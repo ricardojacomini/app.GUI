@@ -9,7 +9,7 @@ export WEBSOCKIFY_CMD="websockify"
 function lmd()
 {
   unset MODULES_CMD
-  source /apps/helpers/Lmod
+  source /apps/Lmod
   source /apps/helpers/apptainer.sh > /dev/null 2>&1
 }
 

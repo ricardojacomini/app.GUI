@@ -9,7 +9,7 @@ export WEBSOCKIFY_CMD="websockify"
 function lmd()
 {
   unset MODULES_CMD
-  source /apps/helpers/Lmod
+  source /apps/Lmod
   source /apps/helpers/apptainer.sh > /dev/null 2>&1
 }
 
@@ -72,7 +72,7 @@ elif [[ $# -eq 0 ]]; then
 fi
 
 export QNVSM="/apps/software/extern/app.GUI/2.0"
-Wrapper functions to run TurboVNC tools inside apptainer container
+# Wrapper functions to run TurboVNC tools inside apptainer container
 Xvnc() {
   apptainer exec --nv -B /usr/share/glvnd:/usr/share/glvnd -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp /apps/software/extern/apptainer/app.GUI/2.0/rockylinux9.sif /opt/TurboVNC/bin/Xvnc "$@"
 }
