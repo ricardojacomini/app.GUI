@@ -1,5 +1,6 @@
 # Logs
 *.log
 .claude
-.backup.bck
+.backup
+.bck
 .tmp/
