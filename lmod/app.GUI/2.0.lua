@@ -42,10 +42,10 @@ app.GUI quick start
 
 2. Start a GUI session:
    CPU default:
-   $ app --start-session
+   $ app --start-session &
 
    GPU:
-   $ app --gpu --start-session
+   $ app --gpu --start-session &
 
 3. If you want to choose a resolution interactively, run the command in the foreground.
    For background mode, pass it explicitly, for example:
@@ -65,6 +65,9 @@ app.GUI quick start
 
 6. If needed, inspect the saved GUI environment:
    $ app --print-env
+
+7. Futher details:
+   $ app --help
 
 Supported resolutions:
   1024x768

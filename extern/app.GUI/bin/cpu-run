@@ -1,0 +1,25 @@
+#!/bin/bash
+set -e
+if [[ $# -eq 0 ]]; then
+  echo "Usage: cpu-run <application> [args...]" 1>&2
+  exit 1
+fi
+eval "$(cpu.app --print-env 2>/dev/null)" || {
+  echo "No CPU GUI session found. Run: cpu.app --start-session first." 1>&2
+  exit 1
+}
+if [[ -z "${APP_SESSION_DIR}" || ! -d "${APP_SESSION_DIR}" ]]; then
+  echo "Active session directory not found." 1>&2
+  exit 1
+fi
+args=("$@")
+if [[ "$1" == "xterm" ]]; then
+  args=(xterm -fa "DejaVu Sans Mono" -fs 11 -bg "#1e1e1e" -fg "#d4d4d4" "${@:2}")
+fi
+run_log="${APP_SESSION_DIR}/cpu-run.log"
+nohup "${args[@]}" </dev/null > "$run_log" 2>&1 &
+app_pid=$!
+disown "$app_pid" 2>/dev/null || true
+echo "$app_pid" >> "${APP_SESSION_DIR}/app.pids"
+echo "Started ${args[0]} with PID $app_pid"
+echo "Log: $run_log"

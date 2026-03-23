@@ -1,0 +1,15 @@
+#!/bin/bash
+set -e
+nohup gpu.app --start-session > "$HOME/gpuapp.out" 2>&1 &
+tries=0
+while [[ $tries -lt 20 && ! -f "$HOME/gpuapp.env" ]]; do
+  sleep 1
+  tries=$((tries + 1))
+done
+if [[ ! -f "$HOME/gpuapp.env" ]]; then
+  echo "gpuapp.env was not created yet. Check: tail -f $HOME/gpuapp.out" 1>&2
+  exit 1
+fi
+echo "GPU GUI session ready."
+echo "Connection info: $HOME/connection.yml"
+echo 'Next in your current shell: eval "$(gpu.app --print-env)"'

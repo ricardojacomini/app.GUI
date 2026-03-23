@@ -1,0 +1,8 @@
+[app] (name=fbrun)
+  [Position]	(CENTER)	{0 0}
+  [Layer]	{2}
+[end]
+[app] (name=FoxApp) (class=FoxWindow)
+  [Maximized]	  {yes}
+  [Fullscreen]	{no}
+[end]
