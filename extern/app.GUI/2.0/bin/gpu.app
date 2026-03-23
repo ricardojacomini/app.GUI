@@ -305,7 +305,7 @@ eval $(dbus-launch --sh-syntax 2>/dev/null) || true
 (
   XAUTH_FILE="${HOME}/.Xauthority"
   fluxbox () {
-    APPTAINERENV_XAUTHORITY=${XAUTH_FILE}     APPTAINERrENV_DISPLAY=":${display}"     apptainer exec --nv -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp -B ${XAUTH_FILE}:${XAUTH_FILE} -B /usr/share/glvnd:/usr/share/glvnd -B /tmp/.X11-unix:/tmp/.X11-unix /apps/software/extern/apptainer/app.GUI/2.0/rockylinux9.sif fluxbox "$@"
+    APPTAINERENV_XAUTHORITY=${XAUTH_FILE}     APPTAINERENV_DISPLAY=":${display}"     apptainer exec --nv -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp -B ${XAUTH_FILE}:${XAUTH_FILE} -B /usr/share/glvnd:/usr/share/glvnd -B /tmp/.X11-unix:/tmp/.X11-unix /apps/software/extern/apptainer/app.GUI/2.0/rockylinux9.sif fluxbox "$@"
   }
   FLUXBOX_ROOT="${QNVSM:-/apps/software/extern/app.GUI/2.0}/fluxbox"
 export FLUXBOX_ROOT
