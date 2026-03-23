@@ -4,3 +4,4 @@
 *.backup
 *.bck
 .tmp/
+*.sif
