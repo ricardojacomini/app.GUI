@@ -1,0 +1,19 @@
+# Run on local computer with docker desktop
+# the docker push it on dockerhub repository, the pull it  with singularity on compute node on Rockfish
+
+# Method 1 - on computer node
+sudo singularity build rockylinux9.sif Dockerfile.rockylinux9
+
+# Inspect 
+singularity inspect rockylinux9.sif
+
+# Method 2
+# On local computer
+docker build  - < Dockerfile.rockylinux9
+
+# On Rockfish computer node
+# singularity pull rockylinux9.sif docker://archrockfish/ondemand-vnc:18.04
+
+mkdir -p /apps/extern/singularity/app.GUI/2.0/
+
+cp rockylinux9.sif /apps/extern/singularity/app.GUI/2.0/

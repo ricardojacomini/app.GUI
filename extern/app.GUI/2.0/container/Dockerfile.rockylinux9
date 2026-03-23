@@ -1,0 +1,64 @@
+Bootstrap: docker
+
+From: rockylinux:9
+
+%setup
+ cp *.repo $SINGULARITY_ROOTFS
+
+%post
+
+ uname -a
+ echo "exclude_mirrors=mirror.sr.unh.edu" >> /etc/dnf/dnf.conf
+ dnf update -y && dnf clean all && dnf upgrade -y
+ dnf clean packages
+ dnf install -y epel-release
+ dnf config-manager --set-enabled crb -y
+ dnf update --allowerasing -y
+
+ # Core X11 + Xfce desktop
+ dnf groupinstall -y "Xfce"
+ dnf install -y wget perl
+ dnf install -y xfconf xdotool xclip sssd-dbus
+ dnf install -y python3-numpy python3-pip
+
+ # fluxbox dependencies
+ dnf install -y imlib2 libXpm
+
+ # fluxbox: not in EPEL 9, install from EPEL 8 RPM
+ rpm -ivh https://dl.fedoraproject.org/pub/epel/8/Everything/x86_64/Packages/f/fluxbox-1.3.7-11.el8.x86_64.rpm --nodeps || \
+   dnf install -y fluxbox
+
+ dnf install -y chromium
+
+ # OpenGL + XINERAMA
+ dnf install -y mesa-libGL mesa-libGLU
+ dnf install -y libXinerama libXi libXrandr libXext
+
+ mv *.repo /etc/yum.repos.d/
+ dnf update --allowerasing -y
+
+ yum install -y turbovnc
+ yum install -y VirtualGL
+
+ TZ=America/New_York
+ rm -rf /etc/localtime
+ ln -fs /usr/share/zoneinfo/$TZ /etc/localtime
+ date
+
+ pip3 install --upgrade pip
+ pip3 install websockify
+ ln -s /usr/local/bin/websockify /usr/bin/websockify
+
+ dnf clean all
+ rm -rf /var/tmp/yum-* /var/cache/dnf
+
+%environment
+   export LC_ALL=C
+   export LANG=en_US.UTF-8
+   export PATH="/opt/TurboVNC/bin:/opt/TurboVNC/java/jre/bin:/opt/VirtualGL/bin:$PATH"
+   export WEBSOCKIFY_CMD="/usr/bin/websockify"
+
+%labels
+   Maintainer Ricardo S. Jacomini
+   Version v9.6
+   Date 03:20:2026
