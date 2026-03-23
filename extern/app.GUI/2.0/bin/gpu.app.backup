@@ -1,5 +1,4 @@
 #!/bin/bash 
-set +m
 
 export host
 export port
@@ -44,7 +43,7 @@ END_HELP
     ;;
 esac
 
-BACKEND="cpu"
+BACKEND="gpu"
 SESSION_ROOT="${HOME}/.app.GUI/${BACKEND}"
 ACTIVE_SESSION_FILE="${SESSION_ROOT}/current"
 mkdir -p "${SESSION_ROOT}"
@@ -55,11 +54,11 @@ get_active_session_dir() {
 
 if [[ "${MODE}" == "print-env" ]]; then
   SESSION_DIR="$(get_active_session_dir)"
-  if [[ -n "${SESSION_DIR}" && -f "${SESSION_DIR}/cpuapp.env" ]]; then
-    cat "${SESSION_DIR}/cpuapp.env"
+  if [[ -n "${SESSION_DIR}" && -f "${SESSION_DIR}/gpuapp.env" ]]; then
+    cat "${SESSION_DIR}/gpuapp.env"
     exit 0
   fi
-  echo "cpuapp.env not found. Start a session first with: cpu.app --start-session" 1>&2
+  echo "gpuapp.env not found. Start a session first with: gpu.app --start-session" 1>&2
   exit 1
 fi
 
@@ -67,12 +66,14 @@ SESSION_ONLY=0
 if [[ "${MODE}" == "start-session" ]]; then
   SESSION_ONLY=1
 elif [[ $# -eq 0 ]]; then
-  echo "Usage: cpu.app [--geometry WIDTHxHEIGHT] --start-session | --print-env | cpu.app <application> [args...]" 1>&2
+  echo "Usage: gpu.app [--geometry WIDTHxHEIGHT] --start-session | --print-env | gpu.app <application> [args...]" 1>&2
   exit 1
 fi
 
-export QNVSM="/data/apps/extern/app.GUI/2.0"
-Wrapper functions to run TurboVNC tools inside singularity container
+# it came from modulefile
+# export QNVSM="/data/apps/extern/app.GUI/2.0"
+
+# Wrapper functions to run TurboVNC tools inside singularity container
 Xvnc() {
   singularity exec --nv -B /usr/share/glvnd:/usr/share/glvnd -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp /data/apps/extern/singularity/app.GUI/2.0/rockylinux9.sif /opt/TurboVNC/bin/Xvnc "$@"
 }
@@ -82,11 +83,6 @@ vncpasswd() {
   singularity exec --nv -B ${HOME}:${HOME} -B /usr/share/glvnd:/usr/share/glvnd -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp /data/apps/extern/singularity/app.GUI/2.0/rockylinux9.sif /opt/TurboVNC/bin/vncpasswd "$@"
 }
 export -f vncpasswd
-
-# CPU sessions should render fully in software to avoid libEGL /dev/dri permission warnings.
-export LIBGL_ALWAYS_SOFTWARE="1"
-export MESA_LOADER_DRIVER_OVERRIDE="llvmpipe"
-export GALLIUM_DRIVER="llvmpipe"
 
 
 cleanup_session_dir() {
@@ -153,16 +149,13 @@ spassword: $spassword" > "${SESSION_DIR}/connection.yml"
 create_env_file () {
   (
     umask 077
-    cat > "${SESSION_DIR}/cpuapp.env" <<EOF
+    cat > "${SESSION_DIR}/gpuapp.env" <<EOF
 export DISPLAY=":${display}"
 export XAUTHORITY="${HOME}/.Xauthority"
 export QT_QPA_PLATFORM="xcb"
 export APP_SESSION_DIR="${SESSION_DIR}"
-export LIBGL_ALWAYS_SOFTWARE="1"
-export MESA_LOADER_DRIVER_OVERRIDE="llvmpipe"
-export GALLIUM_DRIVER="llvmpipe"
 EOF
-    cp -f "${SESSION_DIR}/cpuapp.env" "/home/$USER/cpuapp.env"
+    cp -f "${SESSION_DIR}/gpuapp.env" "/home/$USER/gpuapp.env"
   )
 }
 
@@ -255,7 +248,7 @@ ln -sf "${VNC_LOG}" "${HOME}/vnc.log"
 
 change_passwd() {
   echo -ne "$password
-$spassword" | singularity exec -B ${HOME}:${HOME} -B /usr/lib/locale:/usr/lib/locale,/var:/var,/tmp:/tmp /data/apps/extern/singularity/app.GUI/2.0/rockylinux9.sif /opt/TurboVNC/bin/vncpasswd -f > "${SESSION_DIR}/vnc.passwd" 2>/dev/null || true
+$spassword" | singularity exec -B ${HOME}:${HOME} -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp -B /usr/share/glvnd:/usr/share/glvnd /data/apps/extern/singularity/app.GUI/2.0/rockylinux9.sif /opt/TurboVNC/bin/vncpasswd -f > "${SESSION_DIR}/vnc.passwd" 2>/dev/null || true
   cp -f "${SESSION_DIR}/vnc.passwd" "${HOME}/vnc.passwd"
 }
 create_passwd() { tr -cd a-zA-Z0-9 < /dev/urandom | head -c$1; }
@@ -289,14 +282,11 @@ cat 1>&2 << END
 
 END
 
-echo "Shell environment saved to ${SESSION_DIR}/cpuapp.env"
-echo "Run: source ${HOME}/cpuapp.env"
+echo "Shell environment saved to ${SESSION_DIR}/gpuapp.env"
+echo "Run: source ${HOME}/gpuapp.env"
 
 export QT_QPA_PLATFORM="xcb"
 export XAUTHORITY="${HOME}/.Xauthority"
-export LIBGL_ALWAYS_SOFTWARE="1"
-export MESA_LOADER_DRIVER_OVERRIDE="llvmpipe"
-export GALLIUM_DRIVER="llvmpipe"
 
 
 echo "Waiting for VNC client to connect on port ${port}..."
@@ -314,10 +304,9 @@ eval $(dbus-launch --sh-syntax 2>/dev/null) || true
 (
   XAUTH_FILE="${HOME}/.Xauthority"
   fluxbox () {
-    SINGULARITYENV_XAUTHORITY=${XAUTH_FILE}     SINGULARITYENV_DISPLAY=":${display}"     singularity exec -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp -B ${XAUTH_FILE}:${XAUTH_FILE} -B /tmp/.X11-unix:/tmp/.X11-unix /data/apps/extern/singularity/app.GUI/2.0/rockylinux9.sif fluxbox "$@"
+    SINGULARITYENV_XAUTHORITY=${XAUTH_FILE}     SINGULARITYENV_DISPLAY=":${display}"     singularity exec --nv -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp -B ${XAUTH_FILE}:${XAUTH_FILE} -B /usr/share/glvnd:/usr/share/glvnd -B /tmp/.X11-unix:/tmp/.X11-unix /data/apps/extern/singularity/app.GUI/2.0/rockylinux9.sif fluxbox "$@"
   }
-  FLUXBOX_ROOT="${QNVSM:-/data/apps/extern/app.GUI/2.0}/fluxbox"
-export FLUXBOX_ROOT
+  export FLUXBOX_ROOT="${QNVSM}/fluxbox"
   fluxbox -display ":${display}" -rc "${FLUXBOX_ROOT}/fluxbox.rc"
 ) &
 FLUXBOX_PID=$!
@@ -327,14 +316,11 @@ sleep 5
 export DISPLAY=":${display}"
 export XAUTHORITY="${HOME}/.Xauthority"
 export QT_QPA_PLATFORM="xcb"
-export LIBGL_ALWAYS_SOFTWARE="1"
-export MESA_LOADER_DRIVER_OVERRIDE="llvmpipe"
-export GALLIUM_DRIVER="llvmpipe"
 
 
 if [[ ${SESSION_ONLY} -eq 1 ]]; then
   echo "Session-only mode active on DISPLAY=:${display}"
-  echo 'Run: eval "$(cpu.app --print-env)"'
+  echo 'Run: eval "$(gpu.app --print-env)"'
   echo "Then launch apps from your shell, for example: matlab -desktop &"
   bash -lc 'trap "exit 0" TERM INT; while :; do sleep 3600; done' &
 else
