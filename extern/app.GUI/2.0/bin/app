@@ -4,7 +4,6 @@
 # Ricardo S Jacomini < rdesouz4 @ jhu.edu >
 # Date: March, 23 2025
 
-
 set -e
 
 backend="cpu"
