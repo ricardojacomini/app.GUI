@@ -13,14 +13,14 @@ This repository snapshot contains:
 CPU is the default backend:
 
 ```bash
-app --start-session
+app --start-session &
 app --run <application> [args...]
 ```
 
 GPU-enabled launch:
 
 ```bash
-app --gpu --start-session
+app --gpu --start-session &
 app --gpu --run <application> [args...]
 ```
 
@@ -31,7 +31,7 @@ Start a CPU session in the background and launch MATLAB:
 ```bash
 app --start-session &
 ml matlab/R2021a
-app --run matlab -desktop
+app --run matlab -desktop &
 ```
 
 Start a GPU session in the background and launch MATLAB:
@@ -39,7 +39,7 @@ Start a GPU session in the background and launch MATLAB:
 ```bash
 app --gpu --start-session &
 ml matlab/R2021a
-app --gpu --run matlab -desktop
+app --gpu --run matlab -desktop &
 ```
 
 Choose a resolution explicitly:
@@ -60,5 +60,5 @@ Supported resolutions:
 
 - `cpu.app` and `gpu.app` are internal launchers.
 - `app` is the intended public interface.
-- The modulefile expects the install root to be `/data/apps/extern/app.GUI/2.0`.
-- The current modulefile path in production is `/data/apps/lmod/linux-centos8-x86_64/ext/app.GUI/2.0.lua`.
+- The modulefile expects the install root to be `/apps/software/extern/app.GUI/2.0`.
+- The current modulefile path in production is `/apps/lmod/extern/app.GUI/2.0.lua`.
