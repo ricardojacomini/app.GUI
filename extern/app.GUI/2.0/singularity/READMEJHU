@@ -14,6 +14,6 @@ docker build  - < Dockerfile.rockylinux9
 # On Rockfish computer node (old container)
 # singularity pull rockylinux9.sif docker://archrockfish/ondemand-vnc:18.04
 
-mkdir -p /apps/extern/singularity/app.GUI/2.0/
+mkdir -p /apps/software/extern/singularity/app.GUI/2.0/
 
-cp rockylinux9.sif /apps/extern/singularity/app.GUI/2.0/
+cp rockylinux9.sif /apps/software/extern/singularity/app.GUI/2.0/
