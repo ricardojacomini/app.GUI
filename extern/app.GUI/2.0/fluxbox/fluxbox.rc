@@ -118,16 +118,16 @@ session.tabs:   true
 ! session.styleOverlay: <%= session.staged_root.join("fluxbox", "overlay") %>
 
 
-session.menuFile:     ${QNVSM}/fluxbox/menu
-session.keyFile:      ${QNVSM}/fluxbox/keys
-session.styleOverlay: ${QNVSM}/fluxbox/overlay
+session.menuFile:     /data/apps/extern/app.GUI/2.0/fluxbox/menu
+session.keyFile:      /data/apps/extern/app.GUI/2.0/fluxbox/keys
+session.styleOverlay: /data/apps/extern/app.GUI/2.0/fluxbox/overlay
 
 session.groupFile:      ~/.fluxbox/groups
-session.appsFile:       ${QNVSM}/fluxbox/apps
+session.appsFile:       /data/apps/extern/app.GUI/2.0/fluxbox/apps
 session.slitlistFile:   ~/.fluxbox/slitlist
 
 ! (fluxbox) skin path
-! session.styleFile:      ~/.fluxbox/styles/fluxy
+session.styleFile:      /usr/share/fluxbox/styles/BlueNight
 
 ! session.screen0.decorateTransient:      false
 session.screen0.decorateTransient: true

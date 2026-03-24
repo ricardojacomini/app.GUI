@@ -9,8 +9,8 @@ export WEBSOCKIFY_CMD="websockify"
 function lmd()
 {
   unset MODULES_CMD
-  source /apps/Lmod
-  source /apps/helpers/apptainer.sh > /dev/null 2>&1
+  source /apps/helpers/Lmod
+  source /apps/helpers/singularity.sh > /dev/null 2>&1
 }
 
 lmd
@@ -71,15 +71,15 @@ elif [[ $# -eq 0 ]]; then
   exit 1
 fi
 
-export QNVSM="/apps/software/extern/app.GUI/2.0"
-# Wrapper functions to run TurboVNC tools inside apptainer container
+export QNVSM="/apps/extern/app.GUI/2.0"
+# Wrapper functions to run TurboVNC tools inside singularity container
 Xvnc() {
-  apptainer exec --nv -B /usr/share/glvnd:/usr/share/glvnd -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp /apps/software/extern/apptainer/app.GUI/2.0/rockylinux9.sif /opt/TurboVNC/bin/Xvnc "$@"
+  singularity exec --nv -B /usr/share/glvnd:/usr/share/glvnd -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp /apps/software/extern/singularity/app.GUI/2.0/rockylinux9.sif /opt/TurboVNC/bin/Xvnc "$@"
 }
 export -f Xvnc
 
 vncpasswd() {
-  apptainer exec --nv -B ${HOME}:${HOME} -B /usr/share/glvnd:/usr/share/glvnd -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp /apps/software/extern/apptainer/app.GUI/2.0/rockylinux9.sif /opt/TurboVNC/bin/vncpasswd "$@"
+  singularity exec --nv -B ${HOME}:${HOME} -B /usr/share/glvnd:/usr/share/glvnd -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp /apps/software/extern/singularity/app.GUI/2.0/rockylinux9.sif /opt/TurboVNC/bin/vncpasswd "$@"
 }
 export -f vncpasswd
 
@@ -255,12 +255,12 @@ ln -sf "${VNC_LOG}" "${HOME}/vnc.log"
 
 change_passwd() {
   echo -ne "$password
-$spassword" | apptainer exec -B ${HOME}:${HOME} -B /usr/lib/locale:/usr/lib/locale,/var:/var,/tmp:/tmp /apps/software/extern/apptainer/app.GUI/2.0/rockylinux9.sif /opt/TurboVNC/bin/vncpasswd -f > "${SESSION_DIR}/vnc.passwd" 2>/dev/null || true
+$spassword" | singularity exec -B ${HOME}:${HOME} -B /usr/lib/locale:/usr/lib/locale,/var:/var,/tmp:/tmp /apps/software/extern/singularity/app.GUI/2.0/rockylinux9.sif /opt/TurboVNC/bin/vncpasswd -f > "${SESSION_DIR}/vnc.passwd" 2>/dev/null || true
   cp -f "${SESSION_DIR}/vnc.passwd" "${HOME}/vnc.passwd"
 }
 create_passwd() { tr -cd a-zA-Z0-9 < /dev/urandom | head -c$1; }
 
-mkdir -p /tmp/.X11-unix
+mkdir -p /tmp/.X11-unix && chmod 777 /tmp/.X11-unix 2>/dev/null || true
 Xvnc :${display} -auth "${HOME}/.Xauthority" -desktop "TurboVNC: ${host}:${display} (${USER})" -geometry "${GEOMETRY}" -depth 24 -rfbauth "${SESSION_DIR}/vnc.passwd" -rfbport ${port} -x509cert "${HOME}/.vnc/x509_cert.pem" -x509key "${HOME}/.vnc/x509_private.pem" -fp catalogue:/etc/X11/fontpath.d -deferupdate 1 -dridir /usr/lib64/dri -registrydir /usr/lib64/xorg -idletimeout 0 >> "${VNC_LOG}" 2>&1 &
 VNC_PID=$!
 export VNC_PID
@@ -314,9 +314,9 @@ eval $(dbus-launch --sh-syntax 2>/dev/null) || true
 (
   XAUTH_FILE="${HOME}/.Xauthority"
   fluxbox () {
-    APPTAINERENV_XAUTHORITY=${XAUTH_FILE}     APPTAINERENV_DISPLAY=":${display}"     apptainer exec -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp -B ${XAUTH_FILE}:${XAUTH_FILE} -B /tmp/.X11-unix:/tmp/.X11-unix /apps/software/extern/apptainer/app.GUI/2.0/rockylinux9.sif fluxbox "$@"
+    SINGULARITYENV_XAUTHORITY=${XAUTH_FILE}     SINGULARITYENV_DISPLAY=":${display}"     SINGULARITYENV_QNVSM="${QNVSM}"     singularity exec -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp -B ${XAUTH_FILE}:${XAUTH_FILE} /apps/software/extern/singularity/app.GUI/2.0/rockylinux9.sif fluxbox "$@"
   }
-  FLUXBOX_ROOT="${QNVSM:-/apps/software/extern/app.GUI/2.0}/fluxbox"
+  FLUXBOX_ROOT="${QNVSM:-/apps/extern/app.GUI/2.0}/fluxbox"
 export FLUXBOX_ROOT
   fluxbox -display ":${display}" -rc "${FLUXBOX_ROOT}/fluxbox.rc"
 ) &

@@ -30,15 +30,15 @@ OnRightGrip Move1 :StartResizing bottomright
 OnWindow Mod1 Mouse1 :MacroCmd {Raise} {Focus} {StartMoving}
 OnWindow Mod1 Mouse3 :MacroCmd {Raise} {Focus} {StartResizing NearestCorner}
 
-# Keyboard shortcuts for moving windows
-Mod1 Left :MoveToEdge Left
-Mod1 Right :MoveToEdge Right
-Mod1 Up :MoveToEdge Up
-Mod1 Down :MoveToEdge Down
-Mod1 Shift Left :MoveToEdge TopLeft
-Mod1 Shift Right :MoveToEdge TopRight
-Mod1 Shift Up :MoveToEdge BottomLeft
-Mod1 Shift Down :MoveToEdge BottomRight
+# Keyboard shortcuts for moving windows (MoveToEdge not supported in Fluxbox 1.3.7)
+#Mod1 Left :MoveToEdge Left
+#Mod1 Right :MoveToEdge Right
+#Mod1 Up :MoveToEdge Up
+#Mod1 Down :MoveToEdge Down
+#Mod1 Shift Left :MoveToEdge TopLeft
+#Mod1 Shift Right :MoveToEdge TopRight
+#Mod1 Shift Up :MoveToEdge BottomLeft
+#Mod1 Shift Down :MoveToEdge BottomRight
 
 # Keyboard shortcuts for resizing windows
 Mod1 Control Left :ResizeHorizontal -10
@@ -48,7 +48,7 @@ Mod1 Control Down :ResizeVertical +10
 
 # Keyboard shortcuts for maximizing/restoring windows
 Mod1 F11 :Maximize
-Mod1 F12 :Restore
+#Mod1 F12 :Restore
 
 # Keyboard shortcuts for moving windows between workspaces
 Mod1 Shift Left :SendToWorkspace Left

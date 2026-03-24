@@ -187,12 +187,10 @@ case "$mode" in
 
     # Remove X11 sockets and lock files (only those owned by this user)
     find /tmp/.X*-lock -user "${USER}" -delete 2>/dev/null || true
-    for sock in /tmp/.X11-unix/X*; do
-      if [[ -S "$sock" ]]; then
-        ls -l "$sock" 2>/dev/null | grep -q "${USER}" && rm -f "$sock" 2>/dev/null || true
-      fi
+    for sock in "/tmp/.X11-unix/X"*; do
+      [[ -S "$sock" ]] && rm -f "$sock" 2>/dev/null || true
     done
-
+    
     echo "✓ Cleanup complete - all VNC sessions removed"
     ;;
   help|"")
@@ -229,7 +227,6 @@ Examples:
   app --cleanup # remove all sessions
 
   app --gpu --start-session &
-  app --gpu --geometry 2560x1440 --start-session &
   ml matlab/R2021a
   app --gpu --run matlab -desktop
 
