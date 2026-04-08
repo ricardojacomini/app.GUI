@@ -2,11 +2,11 @@
 set -e
 nohup cpu.app --start-session > "$HOME/cpuapp.out" 2>&1 &
 tries=0
-while [[ $tries -lt 20 && ! -f "$HOME/cpuapp.env" ]]; do
+while [[ $tries -lt 20 && ! -f "$HOME/.vnc/cpuapp.env" ]]; do
   sleep 1
   tries=$((tries + 1))
 done
-if [[ ! -f "$HOME/cpuapp.env" ]]; then
+if [[ ! -f "$HOME/.vnc/cpuapp.env" ]]; then
   echo "cpuapp.env was not created yet. Check: tail -f $HOME/cpuapp.out" 1>&2
   exit 1
 fi

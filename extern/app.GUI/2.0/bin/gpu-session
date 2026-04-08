@@ -2,11 +2,11 @@
 set -e
 nohup gpu.app --start-session > "$HOME/gpuapp.out" 2>&1 &
 tries=0
-while [[ $tries -lt 20 && ! -f "$HOME/gpuapp.env" ]]; do
+while [[ $tries -lt 20 && ! -f "$HOME/.vnc/gpuapp.env" ]]; do
   sleep 1
   tries=$((tries + 1))
 done
-if [[ ! -f "$HOME/gpuapp.env" ]]; then
+if [[ ! -f "$HOME/.vnc/gpuapp.env" ]]; then
   echo "gpuapp.env was not created yet. Check: tail -f $HOME/gpuapp.out" 1>&2
   exit 1
 fi

@@ -6,11 +6,14 @@ export port
 export DISPLAY
 export WEBSOCKIFY_CMD="websockify"
 
+MY_UID=$(id -u)
+SIF_IMAGE="/app/extern/singularity/app.GUI/2.0/rockylinux9.sif"
+
 function lmd()
 {
   unset MODULES_CMD
-  source /apps/helpers/Lmod
-  source /apps/helpers/singularity.sh > /dev/null 2>&1
+  source /app/helpers/Lmod
+  source /app/helpers/singularity.sh > /dev/null 2>&1
 }
 
 lmd
@@ -72,16 +75,16 @@ elif [[ $# -eq 0 ]]; then
 fi
 
 # it came from modulefile
-export QNVSM="/apps/software/extern/app.GUI/2.0"
+export QNVSM="/app/extern/app.GUI/2.0"
 
 # Wrapper functions to run TurboVNC tools inside singularity container
 Xvnc() {
-  singularity exec --nv -B /usr/share/glvnd:/usr/share/glvnd -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp /apps/software/extern/singularity/app.GUI/2.0/rockylinux9.sif /opt/TurboVNC/bin/Xvnc "$@"
+  singularity exec --nv -B /usr/share/glvnd:/usr/share/glvnd -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp ${SIF_IMAGE} /opt/TurboVNC/bin/Xvnc "$@"
 }
 export -f Xvnc
 
 vncpasswd() {
-  singularity exec --nv -B ${HOME}:${HOME} -B /usr/share/glvnd:/usr/share/glvnd -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp /apps/software/extern/singularity/app.GUI/2.0/rockylinux9.sif /opt/TurboVNC/bin/vncpasswd "$@"
+  singularity exec --nv -B ${HOME}:${HOME} -B /usr/share/glvnd:/usr/share/glvnd -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp ${SIF_IMAGE} /opt/TurboVNC/bin/vncpasswd "$@"
 }
 export -f vncpasswd
 
@@ -98,7 +101,7 @@ cleanup_session_dir() {
       [[ -n "$pid" ]] && kill -KILL "$pid" 2>/dev/null || true
     done
   fi
-  for pidfile in fluxbox.pid xvnc.pid keepalive.pid vnc_monitor.pid; do
+  for pidfile in fluxbox.pid xvnc.pid keepalive.pid vnc_monitor.pid websockify.pid; do
     if [[ -f "$dir/$pidfile" ]]; then
       pid=$(cat "$dir/$pidfile" 2>/dev/null)
       [[ -n "$pid" ]] && kill -TERM "$pid" 2>/dev/null || true
@@ -121,6 +124,7 @@ clean_up () {
   pkill -P $$ 2>/dev/null || true
   exit ${1:-0}
 }
+trap 'clean_up 1' INT TERM HUP
 
 cleanup_previous_active_session() {
   local prev
@@ -143,7 +147,7 @@ geometry: $GEOMETRY
 backend: $BACKEND
 websocket: $websocket
 spassword: $spassword" > "${SESSION_DIR}/connection.yml"
-    cp -f "${SESSION_DIR}/connection.yml" "/home/$USER/connection.yml"
+    cp -f "${SESSION_DIR}/connection.yml" "${HOME}/.vnc/connection.yml"
   )
 }
 
@@ -153,17 +157,15 @@ create_env_file () {
     cat > "${SESSION_DIR}/gpuapp.env" <<EOF
 export DISPLAY=":${display}"
 export XAUTHORITY="${HOME}/.Xauthority"
-export XDG_RUNTIME_DIR="${HOME}/tmp/run/user/$(id -u)"
+export XDG_RUNTIME_DIR="${HOME}/tmp/run/user/${MY_UID}"
 export QT_QPA_PLATFORM="xcb"
 export APP_SESSION_DIR="${SESSION_DIR}"
 EOF
-    cp -f "${SESSION_DIR}/gpuapp.env" "/home/$USER/gpuapp.env"
+    cp -f "${SESSION_DIR}/gpuapp.env" "${HOME}/.vnc/gpuapp.env"
   )
 }
 
 source_helpers () {
-  random_number () { shuf -i ${1}-${2} -n 1; }
-  export -f random_number
   port_used_python() { python -c "import socket; socket.socket().connect(('$1',$2))" >/dev/null 2>&1; }
   port_used_python3() { python3 -c "import socket; socket.socket().connect(('$1',$2))" >/dev/null 2>&1; }
   port_used_nc(){ nc -w 2 "$1" "$2" < /dev/null > /dev/null 2>&1; }
@@ -172,7 +174,7 @@ source_helpers () {
   port_used () {
     local port="${1#*:}"
     local host=$((expr "${1}" : '\(.*\):' || echo "localhost") | awk 'END{print $NF}')
-    local port_strategies=(port_used_nc port_used_lsof port_used_bash port_used_python port_used_python3)
+    local port_strategies=(port_used_nc port_used_lsof port_used_bash port_used_python3 port_used_python)
     for strategy in ${port_strategies[@]}; do
       $strategy $host $port
       status=$?
@@ -230,6 +232,11 @@ while [[ -f /tmp/.X${display}-lock ]] || [[ -S /tmp/.X11-unix/X${display} ]] || 
 done
 export display
 port=$((5900+display))
+websocket=$((6800+display))
+while port_used "localhost:$websocket"; do
+  websocket=$((websocket+1))
+done
+export websocket
 export port
 DISPLAY=${host}:${display}
 export DISPLAY
@@ -250,13 +257,13 @@ ln -sf "${VNC_LOG}" "${HOME}/vnc.log"
 
 change_passwd() {
   echo -ne "$password
-$spassword" | singularity exec -B ${HOME}:${HOME} -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp -B /usr/share/glvnd:/usr/share/glvnd /apps/software/extern/singularity/app.GUI/2.0/rockylinux9.sif /opt/TurboVNC/bin/vncpasswd -f > "${SESSION_DIR}/vnc.passwd" 2>/dev/null || true
+$spassword" | singularity exec -B ${HOME}:${HOME} -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp -B /usr/share/glvnd:/usr/share/glvnd ${SIF_IMAGE} /opt/TurboVNC/bin/vncpasswd -f > "${SESSION_DIR}/vnc.passwd" 2>/dev/null || true
   cp -f "${SESSION_DIR}/vnc.passwd" "${HOME}/vnc.passwd"
 }
 create_passwd() { tr -cd a-zA-Z0-9 < /dev/urandom | head -c$1; }
 
 mkdir -p /tmp/.X11-unix && chmod 777 /tmp/.X11-unix 2>/dev/null || true
-mkdir -p "${HOME}/tmp/run/user/$(id -u)"
+mkdir -p "${HOME}/tmp/run/user/${MY_UID}"
 Xvnc :${display} -auth "${HOME}/.Xauthority" -desktop "TurboVNC: ${host}:${display} (${USER})" -geometry "${GEOMETRY}" -depth 24 -rfbauth "${SESSION_DIR}/vnc.passwd" -rfbport ${port} -x509cert "${HOME}/.vnc/x509_cert.pem" -x509key "${HOME}/.vnc/x509_private.pem" -fp catalogue:/etc/X11/fontpath.d -deferupdate 1 -dridir /usr/lib64/dri -registrydir /usr/lib64/xorg -idletimeout 0 >> "${VNC_LOG}" 2>&1 &
 VNC_PID=$!
 export VNC_PID
@@ -272,6 +279,11 @@ change_passwd
 create_yml
 create_env_file
 
+# Start websockify for browser-based VNC access
+${WEBSOCKIFY_CMD} ${websocket} localhost:${port} > "${SESSION_DIR}/websockify.log" 2>&1 &
+WEBSOCKIFY_PID=$!
+echo "$WEBSOCKIFY_PID" > "${SESSION_DIR}/websockify.pid"
+
 cat 1>&2 << END
 
 1. SSH tunnel from your workstation using the following command: (screen sharing for macos)
@@ -286,7 +298,7 @@ cat 1>&2 << END
 END
 
 echo "Shell environment saved to ${SESSION_DIR}/gpuapp.env"
-echo "Run: source ${HOME}/gpuapp.env"
+echo "Run: source ${HOME}/.vnc/gpuapp.env"
 
 export QT_QPA_PLATFORM="xcb"
 export XAUTHORITY="${HOME}/.Xauthority"
@@ -306,12 +318,12 @@ unset DBUS_SESSION_BUS_ADDRESS
 eval $(dbus-launch --sh-syntax 2>/dev/null) || true
 (
   XAUTH_FILE="${HOME}/.Xauthority"
-  RUN_USER_DIR="/run/user/$(id -u)"
-  [[ -d "${RUN_USER_DIR}" ]] || { mkdir -p "${HOME}/tmp/run/user/$(id -u)"; RUN_USER_DIR="${HOME}/tmp/run/user/$(id -u)"; }
+  RUN_USER_DIR="/run/user/${MY_UID}"
+  [[ -d "${RUN_USER_DIR}" ]] || { mkdir -p "${HOME}/tmp/run/user/${MY_UID}"; RUN_USER_DIR="${HOME}/tmp/run/user/${MY_UID}"; }
   fluxbox () {
-    SINGULARITYENV_XAUTHORITY=${XAUTH_FILE}     SINGULARITYENV_DISPLAY=":${display}"     SINGULARITYENV_QNVSM="${QNVSM}"     SINGULARITYENV_XDG_RUNTIME_DIR="/run/user/$(id -u)"     singularity exec --nv -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp -B ${XAUTH_FILE}:${XAUTH_FILE} -B /usr/share/glvnd:/usr/share/glvnd -B "${RUN_USER_DIR}":/run/user/$(id -u) /apps/software/extern/singularity/app.GUI/2.0/rockylinux9.sif fluxbox "$@"
+    SINGULARITYENV_XAUTHORITY=${XAUTH_FILE}     SINGULARITYENV_DISPLAY=":${display}"     SINGULARITYENV_QNVSM="${QNVSM}"     SINGULARITYENV_XDG_RUNTIME_DIR="/run/user/${MY_UID}"     singularity exec --nv -B /usr/lib/locale/:/usr/lib/locale/,/var:/var,/tmp:/tmp -B ${XAUTH_FILE}:${XAUTH_FILE} -B /usr/share/glvnd:/usr/share/glvnd -B "${RUN_USER_DIR}":/run/user/${MY_UID} ${SIF_IMAGE} fluxbox "$@"
   }
-  FLUXBOX_ROOT="${QNVSM:-/apps/software/extern/app.GUI/2.0}/fluxbox"
+  FLUXBOX_ROOT="${QNVSM:-/app/extern/app.GUI/2.0}/fluxbox"
 export FLUXBOX_ROOT
   fluxbox -display ":${display}" -rc "${FLUXBOX_ROOT}/fluxbox.rc"
 ) &
